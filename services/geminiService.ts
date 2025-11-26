@@ -12,21 +12,20 @@ export const fetchConjugationChallenge = async (
 ): Promise<ConjugationChallenge> => {
   const tensesString = selectedTenses.join(", ");
   
+  // Concise prompt to reduce token count and improve speed
   const prompt = `
-    Generate a French verb conjugation practice challenge.
+    Generate a French verb conjugation table.
     
-    Task:
-    1. Pick a random common French verb.
-    2. Pick a random tense from: [${tensesString}].
-    3. Provide the full conjugation for the standard pronouns: Je (or J'), Tu, Il/Elle/On, Nous, Vous, Ils/Elles.
+    1. Select a random common verb.
+    2. Select a random tense from: [${tensesString}].
+    3. Generate 6 items for pronouns: Je (or J'), Tu, Il/Elle/On, Nous, Vous, Ils/Elles.
     
-    Constraints:
-    - Handle elision for the first person singular (e.g., if verb is 'Aimer', pronoun is "J'", conjugation is "aime").
-    - For 'Il/Elle/On', use that string as the pronoun label, and the correct 3rd person singular form as the conjugation.
-    - For 'Ils/Elles', use that string as the pronoun label.
-    - If the tense involves an auxiliary (like Passé Composé), the conjugation field must include the auxiliary + participle (e.g., "ai mangé" or "suis allé(e)"). Do not include the subject pronoun in the conjugation field.
-
-    Return the result strictly as a JSON object matching the schema.
+    CRITICAL RULES:
+    - 'pronoun': The display label. Use "J'" if the verb starts with a vowel/h-muet in this tense.
+    - 'conjugation': The verb part ONLY. DO NOT include the pronoun in this field.
+      - CORRECT: "suis", "ai mangé", "me lave"
+      - WRONG: "Je suis", "J'ai mangé", "Je me lave"
+    - Include the auxiliary for compound tenses (e.g. "ai fini").
   `;
 
   try {
@@ -38,8 +37,8 @@ export const fetchConjugationChallenge = async (
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            verb: { type: Type.STRING, description: "The infinitive form (e.g. Manger)" },
-            translation: { type: Type.STRING, description: "English translation (e.g. to eat)" },
+            verb: { type: Type.STRING, description: "Infinitive" },
+            translation: { type: Type.STRING, description: "English translation" },
             tense: { type: Type.STRING },
             mood: { type: Type.STRING },
             items: {
@@ -47,8 +46,8 @@ export const fetchConjugationChallenge = async (
               items: {
                 type: Type.OBJECT,
                 properties: {
-                  pronoun: { type: Type.STRING, description: "Display pronoun (e.g. Je, Tu, J')" },
-                  conjugation: { type: Type.STRING, description: "The verb part only (e.g. mange, ai mangé)" }
+                  pronoun: { type: Type.STRING, description: "e.g. Je, Tu, J'" },
+                  conjugation: { type: Type.STRING, description: "Verb only, no pronoun" }
                 },
                 required: ["pronoun", "conjugation"]
               }
@@ -67,19 +66,19 @@ export const fetchConjugationChallenge = async (
     return data;
   } catch (error) {
     console.error("Error generating challenge:", error);
-    // Fallback data
+    // Fallback data if API fails or quota exceeded
     return {
-      verb: "Être",
-      translation: "to be",
+      verb: "Avoir",
+      translation: "to have",
       tense: "Présent",
       mood: "Indicatif",
       items: [
-        { pronoun: "Je", conjugation: "suis" },
-        { pronoun: "Tu", conjugation: "es" },
-        { pronoun: "Il/Elle/On", conjugation: "est" },
-        { pronoun: "Nous", conjugation: "sommes" },
-        { pronoun: "Vous", conjugation: "êtes" },
-        { pronoun: "Ils/Elles", conjugation: "sont" }
+        { pronoun: "J'", conjugation: "ai" },
+        { pronoun: "Tu", conjugation: "as" },
+        { pronoun: "Il/Elle/On", conjugation: "a" },
+        { pronoun: "Nous", conjugation: "avons" },
+        { pronoun: "Vous", conjugation: "avez" },
+        { pronoun: "Ils/Elles", conjugation: "ont" }
       ]
     };
   }

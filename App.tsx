@@ -5,7 +5,6 @@ import { AccentKeyboard } from './components/AccentKeyboard';
 import { SettingsModal } from './components/SettingsModal';
 import { 
   Sparkles, 
-  RefreshCcw, 
   CheckCircle2, 
   Trophy, 
   Settings2,
@@ -53,8 +52,11 @@ const App: React.FC = () => {
   // Auto-focus first input when active
   useEffect(() => {
     if (status === 'active' && inputRefs.current[0]) {
-      inputRefs.current[0]?.focus();
-      setFocusedIndex(0);
+      // Small timeout to ensure DOM is ready
+      setTimeout(() => {
+        inputRefs.current[0]?.focus();
+        setFocusedIndex(0);
+      }, 50);
     }
   }, [status]);
 
@@ -89,8 +91,10 @@ const App: React.FC = () => {
         handleCheck();
       } else {
         const nextInput = inputRefs.current[index + 1];
-        nextInput?.focus();
-        setFocusedIndex(index + 1);
+        if (nextInput) {
+          nextInput.focus();
+          setFocusedIndex(index + 1);
+        }
       }
     }
   };
@@ -183,6 +187,9 @@ const App: React.FC = () => {
                         onFocus={() => setFocusedIndex(index)}
                         onKeyDown={(e) => handleKeyDown(e, index)}
                         disabled={status === 'reviewed'}
+                        autoComplete="off"
+                        autoCorrect="off"
+                        spellCheck="false"
                         className={`w-full p-3 rounded-xl border-2 outline-none font-bold text-lg transition-all
                           ${isWrong 
                             ? 'border-red-300 bg-red-50 text-red-600' 
@@ -192,7 +199,6 @@ const App: React.FC = () => {
                           }
                         `}
                         placeholder="..."
-                        autoComplete="off"
                       />
                       {isCorrect && (
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500">
